@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>إملاء برو - المنصة المتكاملة</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --main: #4834d4; --sec: #686de0; --win: #2ecc71; --lose: #e74c3c; --bg: #f8f9fa; --gold: #f1c40f; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); margin: 0; padding: 0; user-select: none; }
+        .app-container { max-width: 450px; margin: auto; background: white; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        
+        .header { background: linear-gradient(135deg, var(--main), var(--sec)); color: white; padding: 15px; text-align: center; border-radius: 0 0 25px 25px; }
+        .badge-container { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+        .mini-badge { font-size: 20px; background: rgba(255,255,255,0.2); padding: 5px; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; }
+
+        .timer-container { width: 90%; margin: 10px auto; height: 8px; background: #eee; border-radius: 10px; overflow: hidden; }
+        #progress-bar { width: 100%; height: 100%; background: var(--win); transition: width 1s linear; }
+
+        .game-area { padding: 15px; text-align: center; flex-grow: 1; }
+        #mode-indicator { font-size: 12px; color: var(--sec); font-weight: bold; margin-bottom: 5px; }
+        #word-box { font-size: 48px; font-weight: 900; color: var(--main); min-height: 70px; margin: 10px 0; transition: transform 0.2s; }
+        
+        input { width: 85%; padding: 12px; font-size: 22px; border: 3px solid #eee; border-radius: 15px; text-align: center; outline: none; }
+        input:focus { border-color: var(--main); }
+
+        .btn { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        .btn-main { background: var(--win); color: white; box-shadow: 0 4px #27ae60; }
+        .btn-main:active { transform: translateY(2px); box-shadow: none; }
+        
+        /* تنسيق قسم البريميوم الجديد */
+        .premium-banner { background: #fff3cd; padding: 10px; border-radius: 12px; margin-bottom: 10px; border: 1px dashed #f1c40f; display: flex; justify-content: space-between; align-items: center; }
+        .btn-pay { background: #6c5ce7; color: white; border: none; padding: 5px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; }
+
+        .prizes { font-size: 30px; margin: 10px 0; display: flex; justify-content: center; gap: 8px; }
+        .prize { opacity: 0.1; filter: grayscale(1); transition: 0.5s; }
+        .unlocked { opacity: 1; filter: grayscale(0); transform: scale(1.1); }
+
+        #report-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; overflow-y: auto; }
+        .report-card { background: white; width: 90%; border-radius: 20px; padding: 20px; text-align: right; max-height: 90vh; overflow-y: auto; }
+
+        .settings-panel { padding: 10px; background: #f1f2f6; border-top: 1px solid #ddd; font-size: 11px; }
+        .flex-row { display: flex; gap: 5px; margin-bottom: 5px; }
+    </style>
+    <link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1e88e5">
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <h2 id="name-tag" style="margin:0">بطل الإملاء 🥇</h2>
+        <div id="badge-display" class="badge-container">
+            <div class="mini-badge" title="وسام السرعة" id="b-speed">🚀</div>
+            <div class="mini-badge" title="وسام الدقة" id="b-perfect">🎯</div>
+            <div class="mini-badge" title="وسام الاستماع" id="b-ear">🎧</div>
+        </div>
+        <div style="font-size:14px; margin-top:5px">النقاط: <b id="score">0</b> | المستوى: <b id="level-txt">1</b></div>
+    </div>
+
+    <div class="timer-container"><div id="progress-bar"></div></div>
+
+    <div class="game-area">
+        <div id="premium-lock" class="premium-banner">
+            <span>🔓 افتح جميع الأنماط والجوائز</span>
+            <button class="btn-pay" onclick="goToStripe()">اشترك برو 💎</button>
+        </div>
+
+        <div id="mode-indicator">النمط: تعلم بصري 👁️</div>
+        <div class="prizes">
+            <span id="p1" class="prize">⚽</span><span id="p2" class="prize">🚗</span>
+            <span id="p3" class="prize">⌚</span><span id="p4" class="prize">🏆</span>
+        </div>
+        
+        <div id="word-box">مستعد؟</div>
+        <input type="text" id="answer" placeholder="اكتب هنا..." disabled>
+        
+        <button id="action-btn" class="btn btn-main" onclick="handleAction()">ابدأ التحدي 🚀</button>
+        <button class="btn" style="background:#f1c40f" onclick="speakCurrentWord()">🔈 اسمع مجدداً</button>
+        <button class="btn" style="background:#3498db; color:white" onclick="showReport()">📊 النتائج والرسوم البيانية</button>
+        
+        <div id="msg" style="margin-top: 10px; font-weight: bold; min-height: 25px;"></div>
+    </div>
+
+    <div class="settings-panel">
+        <div class="flex-row">
+            اسم البطل: <input type="text" id="cfg-name" style="width:70px" onchange="saveSettings()">
+            نمط اللعب: 
+            <select id="cfg-mode" onchange="saveSettings()">
+                <option value="visual">بصري (رؤية الكلمة)</option>
+                <option value="audio" id="opt-audio">سماعي (برو 🔒)</option>
+                <option value="missing" id="opt-missing">ذكاء (برو 🔒)</option>
+            </select>
+        </div>
+        كلماتك: <input type="text" id="cfg-words" value="مدرسة، تفاح، كتاب، صلاة، بطل" style="width:100%" onchange="saveSettings()">
+    </div>
+</div>
+
+<div id="report-overlay">
+    <div class="report-card">
+        <h3 style="margin:0">📊 لوحة أداء البطل</h3>
+        <canvas id="mainChart"></canvas>
+        <div id="report-details" style="font-size:13px; background:#f9f9f9; padding:10px; border-radius:10px"></div>
+        <button class="btn btn-main" style="background:#25D366; margin-top:15px" onclick="sendWhatsApp()">ارسل التقرير لواتساب الأهل 📱</button>
+        <button class="btn" style="background:#ccc" onclick="document.getElementById('report-overlay').style.display='none'">إغلاق</button>
+    </div>
+</div>
+
+<script>
+    // --- إعدادات Stripe ---
+    const STRIPE_URL = "https://buy.stripe.com/test_3cI6oA0eG4ke3AreLl33W01"; // استبدل برابطك الفعلي
+    let isPro = localStorage.getItem('isPro') === 'true';
+
+    let current = "", score = 0, gameState = "START", timeLeft = 30, timerInterval, startTime;
+    let sessionData = []; 
+    let chartInstance = null;
+    let wrongWords = []; 
+
+    window.onload = () => {
+        // التحقق من العودة من الدفع بنجاح
+        const params = new URLSearchParams(window.location.search);
+        if(params.get('status') === 'success') {
+            localStorage.setItem('isPro', 'true');
+            isPro = true;
+            alert("🎉 شكراً لك! تم تفعيل إملاء برو مدى الحياة.");
+        }
+
+        document.getElementById('cfg-name').value = localStorage.getItem('childName') || "";
+        document.getElementById('cfg-words').value = localStorage.getItem('customWords') || "مدرسة، تفاح، كتاب، صلاة، بطل";
+        document.getElementById('cfg-mode').value = localStorage.getItem('gameMode') || "visual";
+        
+        checkProStatus();
+        updateUI();
+    };
+
+    function checkProStatus() {
+        if(isPro) {
+            document.getElementById('premium-lock').style.display = 'none';
+            document.getElementById('opt-audio').innerText = "سماعي (تحدي الأذن) 🎧";
+            document.getElementById('opt-missing').innerText = "ذكاء (حرف ناقص) 🧩";
+        }
+    }
+
+    function goToStripe() {
+        window.location.href = STRIPE_URL;
+    }
+
+    function saveSettings() {
+        const mode = document.getElementById('cfg-mode').value;
+        // منع اختيار الأنماط المدفوعة إذا لم يكن مشتركاً
+        if(!isPro && (mode === 'audio' || mode === 'missing')) {
+            alert("🔒 هذا النمط متاح فقط لمشتركي 'إملاء برو'");
+            document.getElementById('cfg-mode').value = 'visual';
+            return;
+        }
+
+        localStorage.setItem('childName', document.getElementById('cfg-name').value);
+        localStorage.setItem('customWords', document.getElementById('cfg-words').value);
+        localStorage.setItem('gameMode', document.getElementById('cfg-mode').value);
+        updateUI();
+    }
+
+    // --- بقية أساسيات التطبيق كما هي دون تعديل ---
+
+    function updateUI() {
+        document.getElementById('score').innerText = score;
+        const name = localStorage.getItem('childName') || "يا بطل";
+        document.getElementById('name-tag').innerText = `البطل: ${name} 🥇`;
+        document.getElementById('level-txt').innerText = Math.floor(score/100) + 1;
+        
+        if(score >= 200) document.getElementById('b-speed').style.background = "var(--gold)";
+        if(score >= 500) document.getElementById('b-perfect').style.background = "var(--gold)";
+        if(localStorage.getItem('gameMode') === 'audio') document.getElementById('b-ear').style.background = "var(--gold)";
+
+        if(score >= 100) document.getElementById('p1').classList.add('unlocked');
+        if(score >= 300) document.getElementById('p2').classList.add('unlocked');
+        if(score >= 600) document.getElementById('p3').classList.add('unlocked');
+        if(score >= 1000) document.getElementById('p4').classList.add('unlocked');
+    }
+
+    function announce(t) { let m = new SpeechSynthesisUtterance(t); m.lang = 'ar-SA'; m.rate = 0.8; window.speechSynthesis.speak(m); }
+    function speakCurrentWord() { if(current) announce(current); }
+
+    function handleAction() {
+        if(gameState === "START" || gameState === "NEXT") startRound();
+        else checkAns();
+    }
+
+    function startRound() {
+        const mode = document.getElementById('cfg-mode').value;
+        let list = document.getElementById('cfg-words').value.split(/[،,]/).map(w => w.trim());
+        
+        if(wrongWords.length > 0 && Math.random() > 0.5) {
+            current = wrongWords.shift();
+            document.getElementById('msg').innerText = "تحدي تكرار الكلمة الصعبة! 💪";
+        } else {
+            current = list[Math.floor(Math.random() * list.length)];
+        }
+
+        const box = document.getElementById('word-box');
+        box.style.opacity = "1";
+        
+        if(mode === 'visual') {
+            box.innerText = current;
+            document.getElementById('mode-indicator').innerText = "النمط: بصري 👁️";
+        } else if(mode === 'audio') {
+            box.innerText = "👂 اسمع واكتب";
+            document.getElementById('mode-indicator').innerText = "النمط: استماع 🎧";
+        } else {
+            let missing = current.split('');
+            let idx = Math.floor(Math.random() * missing.length);
+            missing[idx] = " _ ";
+            box.innerText = missing.join('');
+            document.getElementById('mode-indicator').innerText = "النمط: الحرف المفقود 🧩";
+        }
+
+        announce(current);
+        document.getElementById('answer').value = "";
+        document.getElementById('answer').disabled = true;
+
+        setTimeout(() => {
+            if(mode === 'visual') box.innerText = "❓ اكتب الآن";
+            document.getElementById('answer').disabled = false;
+            document.getElementById('answer').focus();
+            document.getElementById('action-btn').innerText = "تحقق ✅";
+            gameState = "CHECK";
+            startTimer();
+            startTime = Date.now();
+        }, 2000);
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval); timeLeft = 30;
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('progress-bar').style.width = (timeLeft/30)*100 + "%";
+            if(timeLeft <= 0) { clearInterval(timerInterval); timeout(); }
+        }, 1000);
+    }
+
+    function checkAns() {
+        let val = document.getElementById('answer').value.trim();
+        let timeTaken = ((Date.now() - startTime) / 1000).toFixed(1);
+        const name = localStorage.getItem('childName') || "يا بطل";
+
+        if(val === current) {
+            clearInterval(timerInterval);
+            score += 25;
+            sessionData.push({ word: current, status: '✅', time: timeTaken });
+            announce(`أحسنت يا ${name}`);
+            document.getElementById('msg').innerText = `ممتاز! (${timeTaken} ثانية)`;
+            document.getElementById('msg').style.color = "green";
+            gameState = "NEXT";
+            document.getElementById('action-btn').innerText = "التالي ⏭️";
+            updateUI();
+        } else {
+            wrongWords.push(current);
+            sessionData.push({ word: current, status: '❌', time: '-' });
+            announce("حاول مرة أخرى");
+            document.getElementById('msg').innerText = "خطأ، سأكررها لك لاحقاً! ✍️";
+            document.getElementById('msg').style.color = "red";
+        }
+    }
+
+    function timeout() {
+        wrongWords.push(current);
+        sessionData.push({ word: current, status: '⏰', time: '-' });
+        document.getElementById('word-box').innerText = "⏰!";
+        gameState = "NEXT";
+        document.getElementById('action-btn').innerText = "كلمة جديدة ⏭️";
+    }
+
+    function showReport() {
+        document.getElementById('report-overlay').style.display = 'flex';
+        let ctx = document.getElementById('mainChart').getContext('2d');
+        
+        let correct = sessionData.filter(d => d.status === '✅').length;
+        let labels = sessionData.filter(d => d.status === '✅').map(d => d.word);
+        let times = sessionData.filter(d => d.status === '✅').map(d => d.time);
+
+        if(chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{ label: 'سرعتك (ثواني)', data: times, backgroundColor: '#4834d4' }]
+            },
+            options: { responsive: true, plugins: { title: { display: true, text: 'تحليل سرعة البطل 🚀' } } }
+        });
+
+        document.getElementById('report-details').innerHTML = `
+            <b>اسم البطل:</b> ${localStorage.getItem('childName') || 'بطل'}<br>
+            <b>الكلمات الصحيحة:</b> ${correct} من أصل ${sessionData.length}<br>
+            <b>كلمات تحتاج تدريب:</b> ${[...new Set(wrongWords)].join(' - ') || 'لا يوجد'}
+        `;
+    }
+
+    function sendWhatsApp() {
+        let name = localStorage.getItem('childName') || "البطل";
+        let correct = sessionData.filter(d => d.status === '✅').length;
+        let bar = ""; for(let i=0; i<10; i++) bar += (i < (correct/sessionData.length)*10) ? "🟩" : "⬜";
+
+        let text = `🥇 *تقرير إملاء برو للآيفون* 🥇%0A%0A👤 *البطل:* ${name}%0A🎯 *النجاح:* ${bar} %0A✨ *النقاط:* ${score}%0A🧩 *كلمات تم إتقانها:* ${sessionData.filter(d=>d.status==='✅').map(d=>d.word).join(', ')}%0A⚠️ *يحتاج تدريب:* ${[...new Set(wrongWords)].join(', ')}`;
+        window.open(`https://wa.me/?text=${text}`);
+    }
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/pwabuilder-sw.js");
+  });
+}
+</script>
+</body>
+</html>

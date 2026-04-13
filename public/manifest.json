@@ -1,0 +1,13 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "إملاء برو",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "إملاء",
+  "start_url": "/",
+  "theme_color": "#ffffff",
+  "id": "إملاء",
+  "description": "An educational platform for Arabic spelling for children.منصة تعليمية للإملاء العربي للأطفال"
+}
