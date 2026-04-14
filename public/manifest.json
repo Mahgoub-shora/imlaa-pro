@@ -9,5 +9,20 @@
   "start_url": "/",
   "theme_color": "#ffffff",
   "id": "إملاء",
-  "description": "An educational platform for Arabic spelling for children.منصة تعليمية للإملاء العربي للأطفال"
+  "description": "An educational platform for Arabic spelling for children.منصة تعليمية للإملاء العربي للأطفال",
+
+  "icons": [
+    {
+      "src": "/icons/icon-192.JPEG",
+      "sizes": "192x192",
+      "type": "image/JPEG",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.JPEG",
+      "sizes": "512x512",
+      "type": "image/JPEG",
+      "purpose": "any"
+    }
+  ]
 }
