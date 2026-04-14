@@ -13,13 +13,13 @@
 
   "icons": [
     {
-      "src": "/public/icons/icon-192.JPEG",
+      "src": "/icons/icon-192.JPEG",
       "sizes": "192x192",
       "type": "image/JPEG",
       "purpose": "any"
     },
     {
-      "src": "/public/icons/icon-512.JPEG",
+      "src": "/icons/icon-512.JPEG",
       "sizes": "512x512",
       "type": "image/JPEG",
       "purpose": "any"
