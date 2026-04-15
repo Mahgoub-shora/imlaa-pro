@@ -125,6 +125,16 @@
             isPro = true;
             alert("🎉 شكراً لك! تم تفعيل إملاء برو مدى الحياة.");
         }
+        // كود خاص لمراجعة Google
+if (!isPro) {
+    let testCode = prompt("🔑 إذا لديك كود، أدخله هنا (Google Review)");
+
+    if (testCode === "TEST123") {
+        localStorage.setItem('isPro', 'true');
+        isPro = true;
+        alert("تم فتح النسخة الكاملة للمراجعة ✅");
+    }
+}
 
         document.getElementById('cfg-name').value = localStorage.getItem('childName') || "";
         document.getElementById('cfg-words').value = localStorage.getItem('customWords') || "مدرسة، تفاح، كتاب، صلاة، بطل";
