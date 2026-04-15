@@ -126,12 +126,18 @@
             alert("🎉 شكراً لك! تم تفعيل إملاء برو مدى الحياة.");
         }
         // كود خاص لمراجعة Google
-if (!isPro) {
+if (!isPro && !localStorage.getItem("reviewUsed")) {
     let testCode = prompt("🔑 إذا لديك كود، أدخله هنا (Google Review)");
 
-    if (testCode === "TEST123") {
+    if (testCode === "T@fidaShora21") {
         localStorage.setItem('isPro', 'true');
+        localStorage.setItem('reviewUsed', 'true');
         isPro = true;
+
+        // 👇 هذا هو الحل
+        checkProStatus();
+        updateUI();
+
         alert("تم فتح النسخة الكاملة للمراجعة ✅");
     }
 }
